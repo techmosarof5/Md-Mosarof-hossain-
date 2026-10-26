@@ -1,0 +1,124 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net - Default Deny Catch-All
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Admin authorization: runtime bootstrap email or verified admin document
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == 'techmosarof5@gmail.com' ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    // Validation for Site Settings
+    function isValidSiteSettings(data) {
+      return data.keys().hasAll(['siteName', 'adminEmail', 'youtubeChannelId']) &&
+             data.siteName is string && data.siteName.size() > 0 && data.siteName.size() <= 100 &&
+             data.adminEmail is string && data.adminEmail.size() > 0 && data.adminEmail.size() <= 128 &&
+             data.youtubeChannelId is string && data.youtubeChannelId.size() > 0 && data.youtubeChannelId.size() <= 100 &&
+             (!('siteTagline' in data) || (data.siteTagline is string && data.siteTagline.size() <= 200)) &&
+             (!('bio' in data) || (data.bio is string && data.bio.size() <= 3000)) &&
+             (!('profilePhotoUrl' in data) || (data.profilePhotoUrl is string && data.profilePhotoUrl.size() <= 1000)) &&
+             (!('youtubeApiKey' in data) || (data.youtubeApiKey is string && data.youtubeApiKey.size() <= 150)) &&
+             (!('contactEmail' in data) || (data.contactEmail is string && data.contactEmail.size() <= 128)) &&
+             (!('youtubeUrl' in data) || (data.youtubeUrl is string && data.youtubeUrl.size() <= 300)) &&
+             (!('facebookUrl' in data) || (data.facebookUrl is string && data.facebookUrl.size() <= 300)) &&
+             (!('telegramUrl' in data) || (data.telegramUrl is string && data.telegramUrl.size() <= 300)) &&
+             (!('phone' in data) || (data.phone is string && data.phone.size() <= 50)) &&
+             (!('updatedAt' in data) || (data.updatedAt is string && data.updatedAt.size() <= 64)) &&
+             (!('updatedBy' in data) || (data.updatedBy is string && data.updatedBy.size() <= 128));
+    }
+
+    // Validation for Video documents
+    function isValidVideo(data) {
+      return data.keys().hasAll(['videoId', 'title', 'publishedAt']) &&
+             data.videoId is string && data.videoId.size() > 0 && data.videoId.size() <= 64 &&
+             data.title is string && data.title.size() > 0 && data.title.size() <= 300 &&
+             data.publishedAt is string && data.publishedAt.size() > 0 && data.publishedAt.size() <= 50 &&
+             (!('description' in data) || (data.description is string && data.description.size() <= 5000)) &&
+             (!('thumbnailUrl' in data) || (data.thumbnailUrl is string && data.thumbnailUrl.size() <= 1000)) &&
+             (!('category' in data) || (data.category is string && data.category.size() <= 100)) &&
+             (!('duration' in data) || (data.duration is string && data.duration.size() <= 50)) &&
+             (!('views' in data) || (data.views is number && data.views >= 0)) &&
+             (!('isFeatured' in data) || (data.isFeatured is bool)) &&
+             (!('createdAt' in data) || (data.createdAt is string && data.createdAt.size() <= 64)) &&
+             (!('updatedAt' in data) || (data.updatedAt is string && data.updatedAt.size() <= 64));
+    }
+
+    // Validation for User documents
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'email']) &&
+             data.uid is string && data.uid.size() > 0 && data.uid.size() <= 128 &&
+             data.email is string && data.email.size() > 0 && data.email.size() <= 128 &&
+             (!('displayName' in data) || (data.displayName is string && data.displayName.size() <= 128)) &&
+             (!('role' in data) || (data.role in ['user', 'admin'])) &&
+             (!('createdAt' in data) || (data.createdAt is string && data.createdAt.size() <= 64)) &&
+             (!('lastLoginAt' in data) || (data.lastLoginAt is string && data.lastLoginAt.size() <= 64));
+    }
+
+    // Validation for Admin documents
+    function isValidAdmin(data) {
+      return data.keys().hasAll(['email', 'role']) &&
+             data.email is string && data.email.size() <= 128 &&
+             data.role == 'admin';
+    }
+
+    // Global Settings collection
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if isAdmin() && settingId == 'site' && isValidSiteSettings(incoming());
+    }
+
+    // Admins registry
+    match /admins/{adminId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin() && isValidId(adminId) && isValidAdmin(incoming());
+    }
+
+    // Videos collection
+    match /videos/{videoId} {
+      allow read: if true;
+      allow write: if isAdmin() && isValidId(videoId) && isValidVideo(incoming());
+    }
+
+    // Users collection
+    match /users/{userId} {
+      allow get: if (isSignedIn() && request.auth.uid == userId) || isAdmin();
+      allow list: if isAdmin();
+      allow create: if isSignedIn() && request.auth.uid == userId &&
+                      incoming().uid == request.auth.uid &&
+                      incoming().role == 'user' &&
+                      isValidUser(incoming());
+      allow update: if (
+        isSignedIn() && request.auth.uid == userId &&
+        incoming().uid == request.auth.uid &&
+        incoming().role == existing().role &&
+        isValidUser(incoming())
+      ) || isAdmin();
+      allow delete: if isAdmin();
+    }
+  }
+}

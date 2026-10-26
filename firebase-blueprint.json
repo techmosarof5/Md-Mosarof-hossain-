@@ -1,0 +1,216 @@
+{
+  "entities": {
+    "SiteSettings": {
+      "title": "SiteSettings",
+      "description": "Global website settings, branding, creator bio, YouTube channel configuration, and contact details",
+      "type": "object",
+      "properties": {
+        "siteName": {
+          "type": "string",
+          "description": "Primary name of the website (e.g. Md Mosarof Hossain)",
+          "maxLength": 100
+        },
+        "siteTagline": {
+          "type": "string",
+          "description": "Tagline or subtitle in Bengali/English",
+          "maxLength": 200
+        },
+        "bio": {
+          "type": "string",
+          "description": "Short biography of Md Mosarof Hossain in Bengali",
+          "maxLength": 3000
+        },
+        "profilePhotoUrl": {
+          "type": "string",
+          "description": "URL or path of the administrator/creator profile photo",
+          "maxLength": 1000
+        },
+        "adminEmail": {
+          "type": "string",
+          "description": "Authorized administrator email address",
+          "maxLength": 128
+        },
+        "youtubeChannelId": {
+          "type": "string",
+          "description": "Official YouTube Channel ID for video synchronization",
+          "maxLength": 100
+        },
+        "youtubeApiKey": {
+          "type": "string",
+          "description": "Optional YouTube Data API v3 key",
+          "maxLength": 150
+        },
+        "contactEmail": {
+          "type": "string",
+          "description": "Public contact email displayed in the footer",
+          "maxLength": 128
+        },
+        "youtubeUrl": {
+          "type": "string",
+          "description": "Direct link to YouTube channel",
+          "maxLength": 300
+        },
+        "facebookUrl": {
+          "type": "string",
+          "description": "Direct link to Facebook page or profile",
+          "maxLength": 300
+        },
+        "telegramUrl": {
+          "type": "string",
+          "description": "Direct link to Telegram channel or support",
+          "maxLength": 300
+        },
+        "phone": {
+          "type": "string",
+          "description": "Optional contact phone number",
+          "maxLength": 50
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "ISO timestamp of last update"
+        },
+        "updatedBy": {
+          "type": "string",
+          "description": "UID of the administrator who made the update",
+          "maxLength": 128
+        }
+      },
+      "required": ["siteName", "adminEmail", "youtubeChannelId"]
+    },
+    "Admin": {
+      "title": "Admin",
+      "description": "Admin authorization marker mapped to Firebase Auth UID",
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "description": "Admin email address",
+          "maxLength": 128
+        },
+        "role": {
+          "type": "string",
+          "description": "User role marker",
+          "enum": ["admin"]
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "ISO timestamp of assignment"
+        }
+      },
+      "required": ["email", "role"]
+    },
+    "Video": {
+      "title": "Video",
+      "description": "Synchronized public YouTube video metadata",
+      "type": "object",
+      "properties": {
+        "videoId": {
+          "type": "string",
+          "description": "YouTube 11-character video ID",
+          "maxLength": 64
+        },
+        "title": {
+          "type": "string",
+          "description": "Title of the video in Bengali or English",
+          "maxLength": 300
+        },
+        "description": {
+          "type": "string",
+          "description": "Detailed video description",
+          "maxLength": 5000
+        },
+        "thumbnailUrl": {
+          "type": "string",
+          "description": "URL of high quality video thumbnail",
+          "maxLength": 1000
+        },
+        "publishedAt": {
+          "type": "string",
+          "description": "Original YouTube publication date (ISO)",
+          "maxLength": 50
+        },
+        "category": {
+          "type": "string",
+          "description": "Categorization (e.g. ব্যাংকিং, প্রযুক্তি, ফ্রিল্যান্সিং, সাইবার নিরাপত্তা)",
+          "maxLength": 100
+        },
+        "duration": {
+          "type": "string",
+          "description": "Video length (e.g. 14:32)",
+          "maxLength": 50
+        },
+        "views": {
+          "type": "number",
+          "description": "Approximate view count"
+        },
+        "isFeatured": {
+          "type": "boolean",
+          "description": "Whether video is highlighted on homepage"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Local sync timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Last updated timestamp"
+        }
+      },
+      "required": ["videoId", "title", "publishedAt"]
+    },
+    "User": {
+      "title": "User",
+      "description": "Registered visitor profile and viewing bookmarks",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Firebase Auth UID",
+          "maxLength": 128
+        },
+        "email": {
+          "type": "string",
+          "description": "User account email",
+          "maxLength": 128
+        },
+        "displayName": {
+          "type": "string",
+          "description": "User display name",
+          "maxLength": 128
+        },
+        "role": {
+          "type": "string",
+          "description": "Role of the user (user or admin)",
+          "enum": ["user", "admin"]
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Registration timestamp"
+        },
+        "lastLoginAt": {
+          "type": "string",
+          "description": "Last authenticated timestamp"
+        }
+      },
+      "required": ["uid", "email"]
+    }
+  },
+  "firestore": {
+    "/settings/site": {
+      "schema": "SiteSettings",
+      "description": "Global website configuration, creator profile info, YouTube settings, and footer contact"
+    },
+    "/admins/{adminId}": {
+      "schema": "Admin",
+      "description": "Admin role assignment documents keyed by user UID"
+    },
+    "/videos/{videoId}": {
+      "schema": "Video",
+      "description": "Published YouTube videos library with categories and descriptions"
+    },
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Registered user profile records"
+    }
+  }
+}

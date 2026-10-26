@@ -1,0 +1,8 @@
+{
+  "name": "Md Mosarof Hossain - ভিডিও ও প্রযুক্তি কন্টেন্ট",
+  "description": "Md Mosarof Hossain এর অফিশিয়াল ভিডিও স্ট্রিমিং ও নলেজ প্ল্যাটফর্ম। ব্যাংকিং, ফিনটেক, সাইবার নিরাপত্তা, প্রযুক্তি ও ফ্রিল্যান্সিং গাইডলাইন।",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
